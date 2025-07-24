@@ -63,7 +63,8 @@
              <div class="relative bg-white p-8 rounded-xl shadow-lg">
                 <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png" alt="Google Logo" class="mx-auto h-16 md:h-24 mb-8">
                 <div class="relative w-full max-w-xl mx-auto">
-                    <div class="flex items-center border border-gray-300 rounded-full shadow-md h-14 p-4">
+                    <!-- Added an ID to the search bar div for reliable positioning -->
+                    <div id="fake-search-bar" class="flex items-center border border-gray-300 rounded-full shadow-md h-14 p-4">
                         <span id="fake-search-input" class="text-lg text-gray-800"></span>
                     </div>
                     <div class="flex justify-center mt-8 space-x-4">
@@ -91,6 +92,7 @@
         const copyLinkBtn = document.getElementById('copy-link-btn');
         const copyFeedback = document.getElementById('copy-feedback');
 
+        const fakeSearchBar = document.getElementById('fake-search-bar'); // Get the container
         const fakeSearchInput = document.getElementById('fake-search-input');
         const fakeSearchBtn = document.getElementById('fake-search-btn');
         const cursor = document.getElementById('cursor');
@@ -122,7 +124,6 @@
         // Handle copy button
         copyLinkBtn.addEventListener('click', () => {
             generatedLinkInput.select();
-            // Use document.execCommand for broader compatibility in sandboxed environments
             try {
                 document.execCommand('copy');
                 copyFeedback.textContent = 'Copied to clipboard!';
@@ -140,10 +141,10 @@
             // 1. Show cursor and move to search bar
             setTimeout(() => {
                 cursor.style.opacity = '1';
-                const inputRect = fakeSearchInput.getBoundingClientRect();
-                // Position cursor relative to the document, not the viewport
-                cursor.style.top = `${inputRect.top + window.scrollY + (inputRect.height / 2)}px`;
-                cursor.style.left = `${inputRect.left + window.scrollX + 10}px`;
+                // Get the position of the visible search bar, not the empty text span
+                const barRect = fakeSearchBar.getBoundingClientRect();
+                cursor.style.top = `${barRect.top + window.scrollY + (barRect.height / 2)}px`;
+                cursor.style.left = `${barRect.left + window.scrollX + 15}px`; // Added a little offset
             }, 500);
 
             // 2. Type out the query
@@ -171,7 +172,6 @@
         function moveCursorToButton() {
             setTimeout(() => {
                 const btnRect = fakeSearchBtn.getBoundingClientRect();
-                // Position cursor relative to the document, not the viewport
                 cursor.style.top = `${btnRect.top + window.scrollY + (btnRect.height / 2)}px`;
                 cursor.style.left = `${btnRect.left + window.scrollX + (btnRect.width / 2)}px`;
             }, 500);
