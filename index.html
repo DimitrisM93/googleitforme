@@ -126,12 +126,25 @@
             generatedLinkInput.select();
             try {
                 document.execCommand('copy');
-                copyFeedback.textContent = 'Copied to clipboard!';
+                copyFeedback.textContent = 'Link Copied!';
             } catch (err) {
                 copyFeedback.textContent = 'Failed to copy.';
                 console.error('Copy failed', err);
             }
             window.getSelection().removeAllRanges(); // Deselect
+        });
+
+        // Handle Enter key press in the input field
+        searchQueryInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent default form submission
+                
+                // Ensure there's a query to work with
+                if (searchQueryInput.value.trim()) {
+                    generateLinkBtn.click(); // Simulate clicking the generate button
+                    copyLinkBtn.click(); // Simulate clicking the copy button immediately after
+                }
+            }
         });
 
 
