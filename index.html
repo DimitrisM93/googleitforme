@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Let Me Google That For You</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        #cursor {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path><path d="M13 13l6 6"></path></svg>');
+            background-size: contain;
+            transition: top 0.7s ease-in-out, left 0.7s ease-in-out;
+            z-index: 50;
+            opacity: 0;
+        }
+        #fake-search-input {
+            white-space: pre;
+        }
+        .typing-cursor::after {
+            content: '|';
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            from, to { color: transparent }
+            50% { color: black; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div id="main-container" class="w-full max-w-2xl mx-auto p-4 md:p-8 text-center">
+
+        <!-- Initial Search Form -->
+        <div id="search-form" class="bg-white p-8 rounded-xl shadow-lg transition-opacity duration-500">
+            <h1 class="text-2xl md:text-4xl font-bold text-gray-800 mb-2">For those who are too lazy to Google</h1>
+            <p class="text-gray-500 mb-6">Enter a search query below and click the button.</p>
+            <div class="flex flex-col sm:flex-row gap-2">
+                <input type="text" id="search-query" placeholder="Type your question here..." class="flex-grow p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <button id="generate-link-btn" class="bg-blue-600 text-white font-bold py-4 px-6 rounded-lg hover:bg-blue-700 transition-colors">
+                    Let Me Google That For You
+                </button>
+            </div>
+            <div id="generated-link-container" class="mt-6 hidden">
+                <p class="text-gray-600 mb-2">Your shareable link:</p>
+                <div class="flex gap-2">
+                    <input type="text" id="generated-link" readonly class="w-full p-3 bg-gray-100 border rounded-lg">
+                    <button id="copy-link-btn" class="bg-gray-600 text-white font-bold py-3 px-5 rounded-lg hover:bg-gray-700">Copy</button>
+                </div>
+                <p id="copy-feedback" class="text-green-500 text-sm mt-2 h-4"></p>
+            </div>
+        </div>
+
+        <!-- Animation Screen -->
+        <div id="animation-screen" class="hidden w-full max-w-4xl mx-auto">
+             <div class="relative bg-white p-8 rounded-xl shadow-lg">
+                <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png" alt="Google Logo" class="mx-auto h-16 md:h-24 mb-8">
+                <div class="relative w-full max-w-xl mx-auto">
+                    <div class="flex items-center border border-gray-300 rounded-full shadow-md h-14 p-4">
+                        <span id="fake-search-input" class="text-lg text-gray-800"></span>
+                    </div>
+                    <div class="flex justify-center mt-8 space-x-4">
+                         <div id="fake-search-btn" class="bg-gray-100 text-gray-800 font-medium py-2 px-4 rounded-md border border-transparent">Google Search</div>
+                         <div class="bg-gray-100 text-gray-800 font-medium py-2 px-4 rounded-md border border-transparent">I'm Feeling Lucky</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fake Cursor -->
+    <div id="cursor" style="top: 50%; left: 50%;"></div>
+
+    <script>
+        const searchForm = document.getElementById('search-form');
+        const animationScreen = document.getElementById('animation-screen');
+        const mainContainer = document.getElementById('main-container');
+        
+        const searchQueryInput = document.getElementById('search-query');
+        const generateLinkBtn = document.getElementById('generate-link-btn');
+        
+        const generatedLinkContainer = document.getElementById('generated-link-container');
+        const generatedLinkInput = document.getElementById('generated-link');
+        const copyLinkBtn = document.getElementById('copy-link-btn');
+        const copyFeedback = document.getElementById('copy-feedback');
+
+        const fakeSearchInput = document.getElementById('fake-search-input');
+        const fakeSearchBtn = document.getElementById('fake-search-btn');
+        const cursor = document.getElementById('cursor');
+
+        // --- Main Logic ---
+
+        // Check if the URL has a query parameter to start the animation directly
+        window.onload = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const query = urlParams.get('q');
+            if (query) {
+                searchForm.classList.add('hidden');
+                animationScreen.classList.remove('hidden');
+                startAnimation(query);
+            }
+        };
+
+        // Handle link generation
+        generateLinkBtn.addEventListener('click', () => {
+            const query = searchQueryInput.value.trim();
+            if (query) {
+                const searchUrl = `${window.location.origin}${window.location.pathname}?q=${encodeURIComponent(query)}`;
+                generatedLinkInput.value = searchUrl;
+                generatedLinkContainer.classList.remove('hidden');
+                copyFeedback.textContent = '';
+            }
+        });
+
+        // Handle copy button
+        copyLinkBtn.addEventListener('click', () => {
+            generatedLinkInput.select();
+            // Use document.execCommand for broader compatibility in sandboxed environments
+            try {
+                document.execCommand('copy');
+                copyFeedback.textContent = 'Copied to clipboard!';
+            } catch (err) {
+                copyFeedback.textContent = 'Failed to copy.';
+                console.error('Copy failed', err);
+            }
+            window.getSelection().removeAllRanges(); // Deselect
+        });
+
+
+        // --- Animation Functions ---
+
+        function startAnimation(query) {
+            // 1. Show cursor and move to search bar
+            setTimeout(() => {
+                cursor.style.opacity = '1';
+                const inputRect = fakeSearchInput.getBoundingClientRect();
+                const containerRect = mainContainer.getBoundingClientRect();
+                cursor.style.top = `${inputRect.top - containerRect.top + (inputRect.height / 2)}px`;
+                cursor.style.left = `${inputRect.left - containerRect.left + 10}px`;
+            }, 500);
+
+            // 2. Type out the query
+            setTimeout(() => {
+                typeOutQuery(query);
+            }, 1500);
+        }
+
+        function typeOutQuery(query) {
+            let i = 0;
+            fakeSearchInput.classList.add('typing-cursor');
+            const typingInterval = setInterval(() => {
+                if (i < query.length) {
+                    fakeSearchInput.textContent += query.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(typingInterval);
+                    fakeSearchInput.classList.remove('typing-cursor');
+                    // 3. Move cursor to search button
+                    moveCursorToButton();
+                }
+            }, 100);
+        }
+
+        function moveCursorToButton() {
+            setTimeout(() => {
+                const btnRect = fakeSearchBtn.getBoundingClientRect();
+                const containerRect = mainContainer.getBoundingClientRect();
+                cursor.style.top = `${btnRect.top - containerRect.top + (btnRect.height / 2)}px`;
+                cursor.style.left = `${btnRect.left - containerRect.left + (btnRect.width / 2)}px`;
+            }, 500);
+
+            // 4. "Click" the button and redirect
+            setTimeout(() => {
+                fakeSearchBtn.classList.add('bg-blue-500', 'text-white', 'border-blue-700');
+                redirectToGoogle();
+            }, 1500);
+        }
+
+        function redirectToGoogle() {
+            setTimeout(() => {
+                const query = new URLSearchParams(window.location.search).get('q');
+                window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+            }, 400);
+        }
+
+    </script>
+</body>
+</html>
