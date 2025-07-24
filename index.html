@@ -142,7 +142,10 @@
                 // Ensure there's a query to work with
                 if (searchQueryInput.value.trim()) {
                     generateLinkBtn.click(); // Simulate clicking the generate button
-                    copyLinkBtn.click(); // Simulate clicking the copy button immediately after
+                    // Use a minimal timeout to ensure the DOM updates before the copy command is executed
+                    setTimeout(() => {
+                        copyLinkBtn.click(); // Simulate clicking the copy button after a brief delay
+                    }, 50);
                 }
             }
         });
